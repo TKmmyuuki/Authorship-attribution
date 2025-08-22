@@ -1,0 +1,21 @@
+feature,mi_score
+structural_has_hashtag,0.3070273108177155
+structural_hashtag_density,0.2948744237630836
+syntactic_punct_ratio,0.2931373144434162
+lexical_word_length_variance,0.2838289275986481
+syntactic_pos_tag_entropy,0.2275422541780372
+https,0.2243956165994434
+modi,0.19877462209785324
+co,0.1929443259983643
+structural_has_url,0.19175123646051606
+https co,0.18848401593233977
+structural_url_density,0.1853446704941828
+syntactic_pos_bigram_entropy,0.18448409176538227
+structural_extra_spaces,0.169284555769049
+stylistic_capitalization_inconsistency,0.16654494928551045
+the,0.13971400116108512
+lexical_avg_word_length,0.13850907144337898
+of,0.13836041792358977
+syntactic_avg_sentence_length,0.13290015964492774
+syntactic_comma_ratio,0.12428229387605905
+stylistic_random_uppercase,0.12037751635526428
