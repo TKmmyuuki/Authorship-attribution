@@ -8,7 +8,6 @@ lexical_avg_word_length,0.40751661454073895
 lexical_type_token_ratio,0.3790051064177551
 syntactic_punct_ratio,0.3652893863901707
 lexical_word_length_variance,0.33748697768242186
-ai,0.32520673150714874
 stylistic_exclamation_density,0.3209829079645228
 syntactic_pos_tag_entropy,0.31042721293151
 lexical_stopword_ratio,0.2692671354566556
@@ -17,12 +16,7 @@ structural_has_mention,0.19138832195260647
 structural_mention_density,0.18529840041013168
 syntactic_comma_ratio,0.15692072811495628
 structural_extra_spaces,0.14798816620714295
-artificial,0.12404371712751927
-intelligence,0.12039474766625857
-artificial intelligence,0.11815202608370656
 stylistic_emoji_density,0.11381685065110148
-education,0.10477820958807205
-students,0.09200498212806973
 stylistic_question_density,0.07400211995699979
 stylistic_repeated_chars,0.07251724712821583
 teachers,0.07182559478152051

@@ -1,5 +1,4 @@
 feature,mi_score
-llm_ai_references,0.5601891526128264
 structural_hashtag_density,0.5256279868425233
 structural_has_hashtag,0.5106598950337915
 lexical_unique_words,0.4740180915980472
@@ -11,7 +10,6 @@ ai_perplexity_score,0.3757408880646307
 syntactic_punct_ratio,0.3710845862751695
 lexical_type_token_ratio,0.3707159786823506
 lexical_word_length_variance,0.3377472907028143
-ai,0.322964122053216
 stylistic_exclamation_density,0.3212723556733541
 syntactic_pos_tag_entropy,0.31073873036472444
 complexity_long_sentences,0.2989771114405968
