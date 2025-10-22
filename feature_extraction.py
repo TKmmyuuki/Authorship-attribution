@@ -12,13 +12,13 @@ import spacy
 from tqdm import tqdm
 import scipy.sparse as sp
 
-# --- Configurações globais ---
+# Configurações globais 
 EMOTICON_PATTERN = r'[:;=8][\-^]?[)DpP(]'
 URL_PATTERN = r'http\S+|www\S+|https\S+'
 MENTION_PATTERN = r'@\w+'
 HASHTAG_PATTERN = r'#\w+'
 
-# --- Inicialização lazy de modelos ---
+# Inicialização lazy de modelos 
 _tokenizer = None
 _ner_model = None
 nlp = spacy.load("en_core_web_sm")
@@ -42,15 +42,13 @@ def get_ner_model():
 def get_cached_ner(text):
     return get_ner_model().predict(text)
 
-# --- Funções de tokenização ---
+# Funções de tokenização 
 def preprocess_text(text: str) -> List[str]:
-    """Tokeniza o texto usando Twokenizer e normaliza para lowercase"""
     tokenizer = get_tokenizer()
     tokens = tokenizer.tokenize(text)
     return [token.lower() for token in tokens if token.strip()]
 
 def preprocess_text_A(text: str) -> List[str]:
-    """Tokeniza o texto usando Twokenizer"""
     tokenizer = get_tokenizer()
     tokens = tokenizer.tokenize(text)
     return [token for token in tokens if token.strip()]
@@ -63,7 +61,9 @@ def batch_preprocess_texts(texts: List[str]) -> List[List[str]]:
         all_tokens.append([token.lower() for token in tokens if token.strip()])
     return all_tokens
 
-# --- Módulo 1: Features Lexicais ---
+
+# FEATURES PADRÃO
+# Módulo 1: Features Lexicais 
 def extract_lexical_features(text: str, words: List[str]) -> Dict:
     word_count = len(words)
     unique_words = set(words)
@@ -78,16 +78,18 @@ def extract_lexical_features(text: str, words: List[str]) -> Dict:
         'lexical_stopword_ratio': sum(1 for word in words if word in STOPWORDS) / max(1, word_count),
     }
 
-# --- Definindo stopwords básicas para tweets (pode ser expandido) ---
+# Definindo stopwords básicas para tweets (pode ser expandido) 
 STOPWORDS = set([
     "a", "an", "the", "and", "or", "but", "if", "in", "on", "for", "to", "of", 
     "at", "by", "with", "is", "are", "was", "were", "be", "been", "being", "i",
     "you", "he", "she", "it", "we", "they", "me", "him", "her", "us", "them"
 ])
 
+
+
+
 # Módulo 2: Features Sintáticas
 def extract_syntactic_features(words: List[str]) -> Dict:
-    """Extrai features sintáticas de uma lista de tokens usando spaCy"""
     word_count = len(words)
     
     # Juntar os tokens em texto para processamento adequado
@@ -127,7 +129,7 @@ def extract_syntactic_features(words: List[str]) -> Dict:
 
 
 
-# --- Módulo 3: Features Estilísticas ---
+#  Módulo 3: Features Estilísticas 
 def extract_stylistic_features(text: str, word_count: int) -> Dict:
     return {
         'stylistic_repeated_chars': int(bool(re.search(r'(.)\1{2,}', text))),
@@ -147,7 +149,9 @@ def extract_stylistic_featuresA(text: str, word_count: int) -> Dict:
     }
 
 
-# --- Módulo 4: Features Estruturais ---
+
+
+#  Módulo 4: Features Estruturais 
 def extract_structural_features(text: str, words: List[str], word_count: int) -> Dict:
     return {
         'structural_has_url': int(bool(re.search(URL_PATTERN, text))),
@@ -161,29 +165,10 @@ def extract_structural_features(text: str, words: List[str], word_count: int) ->
         'structural_temporal_markers': len([word for word in words if word.lower() in {'today', 'yesterday', 'tomorrow', 'now', 'later'}]) / max(1, word_count),
     }
 
-# --- Módulo 5: Features de NLP (NER) ---
-def extract_tweetnlp_features(text: str, word_count: int) -> Dict:
-    features = {}
-    try:
-        entities = get_cached_ner(text)
-        entity_types = [e['type'] for e in entities]
-        positions = [e['offset'][0] / len(text) for e in entities] if entities else []
 
-        features.update({
-            'ner_count': len(entities),
-            'ner_ratio': len(entities) / max(1, word_count),
-            'ner_type_diversity': len(set(entity_types)) / max(1, len(entity_types)) if entity_types else 0,
-            'ner_position_mean': np.mean(positions) if positions else 0,
-            'ner_position_std': np.std(positions) if len(positions) > 1 else 0,
-            **{f'ner_{type}_count': count for type, count in Counter(entity_types).items()}
-        })
-    except Exception as e:
-        pass
-    return features
 
-# --- Módulo 8: Extração de N-grams ---
+#  Módulo 4.1: Extração de N-grams 
 def extract_ngrams_features(processed_texts: List[List[str]], max_features: int = 300) -> pd.DataFrame:
-    """Extrai features de n-grams a partir de textos já tokenizados"""
     # Juntar os tokens em strings para o CountVectorizer
     text_strings = [" ".join(tokens) for tokens in processed_texts]
     
@@ -192,16 +177,16 @@ def extract_ngrams_features(processed_texts: List[List[str]], max_features: int 
     
     return pd.DataFrame.sparse.from_spmatrix(X_ngrams, columns=vectorizer.get_feature_names_out())
 
-# --- CONFIGURAÇÕES ADICIONAIS ---
+#  CONFIGURAÇÕES ADICIONAIS 
 COMMON_WORDS = set([
     "the", "be", "to", "of", "and", "a", "in", "that", "have", "i", "it", "for", "not", "on", "with", 
     "he", "as", "you", "do", "at", "this", "but", "his", "by", "from", "they", "we", "say", "her", "she"
 ])
 
-# --- NOVAS FUNÇÕES DE FEATURES ---
 
+
+#  FEATURES AVANÇADAS
 def detect_topic_shifts(words: List[str], window_size: int = 5) -> float:
-    """Detecta mudanças abruptas de tópico (simplificado)"""
     if len(words) < window_size * 2:
         return 0.0
     
@@ -210,13 +195,12 @@ def detect_topic_shifts(words: List[str], window_size: int = 5) -> float:
         window1 = set(words[i:i+window_size])
         window2 = set(words[i+window_size:i+window_size*2])
         similarity = len(window1.intersection(window2)) / len(window1.union(window2))
-        if similarity < 0.2:  # Pouca sobreposição
+        if similarity < 0.2:  
             topic_shifts += 1
     
     return topic_shifts / max(1, len(words) - window_size * 2)
 
 def count_hedging_words(words: List[str]) -> int:
-    """Conta palavras que indicam hesitação ou incerteza"""
     hedging_words = {
         'maybe', 'perhaps', 'possibly', 'probably', 'likely', 'unlikely',
         'might', 'could', 'would', 'should', 'seem', 'appear', 'suggest',
@@ -225,7 +209,6 @@ def count_hedging_words(words: List[str]) -> int:
     return sum(1 for word in words if word.lower() in hedging_words)
 
 def calculate_syntactic_depth(doc) -> float:
-    """Calcula profundidade sintática média (simplificado)"""
     if not hasattr(doc[0], 'dep_'):  # Verifica se tem parser
         return 0.0
     
@@ -242,11 +225,8 @@ def calculate_syntactic_depth(doc) -> float:
     
     return np.mean(depths) if depths else 0.0
 
-import re
-import numpy as np
-from typing import Dict, List
 
-# --- REGEX COMPILADOS (helpers reutilizáveis) ---
+#  REGEX COMPILADOS (helpers reutilizáveis) 
 RE_STRUCTURED = re.compile(r'\d+\.\s|-\s|\*\s|\n\d+\.\s|\n\*\s|\n-\s')
 RE_POLITE = re.compile(r'\b(please|thank you|kindly|appreciate|wonderful|great|excellent|'
                        r'i apologize|my apologies|grateful)\b', re.IGNORECASE)
@@ -269,14 +249,14 @@ RE_STEP_REASONING = re.compile(r'\b(first|second|third|next|then|finally|therefo
 RE_ETHICAL = re.compile(r'\b(ethical|moral|responsible|caution|warning|disclaimer|'
                         r'offensive|appropriate|sensitive)\b', re.IGNORECASE)
 
-# --- HELPERS ---
+#  Helpers 
 def ratio(count: int, total: int) -> float:
     return count / max(1, total)
 
 def count_matches(pattern: re.Pattern, text: str) -> int:
     return len(pattern.findall(text))
 
-# --- 1. FEATURES ESPECÍFICAS PARA DETECÇÃO DE IA ---
+#  Modulo 5: Features Específicas de Modelos IA
 def extract_ai_specific_features(text: str, words: List[str]) -> Dict:
     word_count = len(words)
     unique_words = set(words)
@@ -296,7 +276,7 @@ def extract_ai_specific_features(text: str, words: List[str]) -> Dict:
         'ai_hedging_language': ratio(hedging_count, word_count),
     }
 
-# --- 2. FEATURES DE COMPLEXIDADE TEXTUAL ---
+#  Modulo 6: Features de Complexidade
 def extract_complexity_features(text: str, words: List[str]) -> Dict:
     word_count = len(words)
     try:
@@ -317,7 +297,7 @@ def extract_complexity_features(text: str, words: List[str]) -> Dict:
         'complexity_syntactic_depth': syntactic_depth,
     }
 
-# --- 3. FEATURES TEMPORAIS ---
+#  Modulo 7: Features de Contexto Temporal
 def extract_temporal_context_features(text: str) -> Dict:
     word_count = len(text.split())
     refs = {
@@ -327,7 +307,7 @@ def extract_temporal_context_features(text: str) -> Dict:
     }
     return {f'temporal_{k}_ratio': ratio(v, word_count) for k, v in refs.items()}
 
-# --- 4. FEATURES GENÉRICAS DE LLM ---
+#  Modulo 8: Features Gerais de LLM
 def extract_general_llm_features(text: str, words: List[str]) -> Dict:
     word_count = len(words)
     return {
@@ -337,7 +317,7 @@ def extract_general_llm_features(text: str, words: List[str]) -> Dict:
         'llm_ai_references': ratio(count_matches(RE_AI_REF, text), word_count),
     }
 
-# --- 5. ESPECÍFICAS DO CHATGPT ---
+#  Modulo 9: Features de ChatGPT Específicas
 def extract_chatgpt_specific_features(text: str, words: List[str]) -> Dict:
     word_count = len(words)
     return {
@@ -348,7 +328,7 @@ def extract_chatgpt_specific_features(text: str, words: List[str]) -> Dict:
         'chatgpt_assistant_patterns': ratio(count_matches(RE_ASSISTANT_PATTERNS, text), word_count),
     }
 
-# --- 6. ESPECÍFICAS DO MISTRAL ---
+#  Modulo 10: Features de Mistral Específicas
 def extract_mistral_specific_features(text: str, words: List[str]) -> Dict:
     word_count = len(words)
     return {
@@ -360,7 +340,7 @@ def extract_mistral_specific_features(text: str, words: List[str]) -> Dict:
         'mistral_low_ethical_disclaimers': ratio(count_matches(RE_ETHICAL, text), word_count),
     }
 
-# --- 7. PROCESSAMENTO EM LOTE ---
+#  Pipeline Completa de Extração de Features
 def extract_features_batch(texts: List[str], processed_texts: List[List[str]]) -> List[Dict]:
     results = []
     for text, words in zip(texts, processed_texts):

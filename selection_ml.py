@@ -22,7 +22,6 @@ import warnings
 warnings.filterwarnings('ignore')
 
 def plot_feature_20importance(features_df):
-    # Gráfico de barras das features
     plt.figure(figsize=(12, 8))
     plt.barh(features_df['feature'], features_df['mi_score'], color='skyblue')
     plt.xlabel('Mutual Information Score', fontsize=12)
@@ -34,7 +33,6 @@ def plot_feature_20importance(features_df):
 
 def plot_feature_importance(features_df, top_n=20, categories=None):
     if categories:
-        # Analysis by categories
         category_importance = {}
         
         for category, keywords in categories.items():
@@ -48,49 +46,44 @@ def plot_feature_importance(features_df, top_n=20, categories=None):
                 'avg_importance': cat_importance / len(cat_features) if cat_features else 0
             }
         
-        # Bar chart by category
         plt.figure(figsize=(10, 6))
         categories_list = list(category_importance.keys())
         importance_values = [cat_info['importance'] for cat_info in category_importance.values()]
         
         colors = [
-            '#ff9999',  # light red
-            '#66b3ff',  # light blue
-            '#99ff99',  # light green
-            '#ffcc99',  # light orange
-            '#c2c2f0',  # lavender
-            '#ffb3e6',  # pink
-            '#c2f0c2',  # mint green
-            '#ff6666',  # stronger red
-            '#66ffcc',  # turquoise
-            '#ffd966'   # yellow
+            '#ff9999',  
+            '#66b3ff',  
+            '#99ff99', 
+            '#ffcc99',  
+            '#c2c2f0',  
+            '#ffb3e6',  
+            '#c2f0c2', 
+            '#ff6666',  
+            '#66ffcc',  
+            '#ffd966'  
         ]
         
         plt.barh(categories_list, importance_values, color=colors[:len(categories_list)])
         plt.xlabel('Total Importance (Mutual Information)', fontsize=12)
         plt.ylabel('Feature Categories', fontsize=12)
         plt.title('Feature Importance by Category (Mutual Information)', fontsize=14, pad=15)
-        plt.gca().invert_yaxis()  # mostra a categoria mais importante no topo
+        plt.gca().invert_yaxis()  
         plt.tight_layout()
         plt.show()
 
 def validate_feature_selection(df, feature_names, target='origin', 
                              top_n_range=range(10, 51, 5), cv_folds=5,
                              correlation_threshold=0.8):
-    # 1. Seleção inicial com MI
     print("📊 Calculando Mutual Information...")
     mi_df = feature_selection_chunked(df, feature_names, target, chunk_size=100)
     
-    # 2. Remover features redundantes baseado em correlação
     print("🔍 Removendo features redundantes...")
     mi_df_non_redundant = remove_redundant_features(mi_df, df, correlation_threshold)
     
-    # 3. Análise de correlação das top features após remoção de redundâncias
     print("📈 Analisando correlações após remoção de redundâncias...")
     top_features = mi_df_non_redundant.head(50)['feature'].tolist()
     plot_correlation_analysis(df, top_features, correlation_threshold)
     
-    # 5. Análise final do melhor conjunto
     print("\n" + "="*60)
     print("📋 RELATÓRIO FINAL DA SELEÇÃO DE FEATURES")
     print("="*60)
@@ -101,14 +94,6 @@ def validate_feature_selection(df, feature_names, target='origin',
     return mi_df_non_redundant
 
 def feature_selection_chunked(df, feature_names, target='origin', chunk_size=100):
-    """
-    Calcula Mutual Information em chunks e retorna DataFrame ordenado
-    Retorna: DataFrame com colunas ['feature', 'mi_score']
-    """
-    from sklearn.feature_selection import mutual_info_classif
-    import pandas as pd
-    import numpy as np
-    
     mi_scores = []
     
     # Processa em chunks para evitar memory errors
@@ -127,10 +112,6 @@ def feature_selection_chunked(df, feature_names, target='origin', chunk_size=100
     return mi_df
 
 def remove_redundant_features(mi_df, df, correlation_threshold=0.8, additional_columns_to_remove=None):
-    """
-    Remove features redundantes baseado em correlação e colunas adicionais especificadas
-    Retorna: DataFrame filtrado com colunas ['feature', 'mi_score']
-    """
     # Colunas adicionais para remover
     default_columns_to_remove = ['ai', 'intelligence', 'artificial intelligence', 'artificial', 'education', 'students']
     if additional_columns_to_remove:
@@ -142,7 +123,7 @@ def remove_redundant_features(mi_df, df, correlation_threshold=0.8, additional_c
     features_to_keep = []
     features_to_remove = []
     
-    # Primeiro, remove as colunas adicionais especificadas
+    # Remove as colunas adicionais especificadas
     for column in default_columns_to_remove:
         if column in features:
             features_to_remove.append(column)
@@ -171,9 +152,6 @@ def remove_redundant_features(mi_df, df, correlation_threshold=0.8, additional_c
     return filtered_df.sort_values('mi_score', ascending=False)
 
 def plot_correlation_analysis(df, features, threshold=0.8):
-    """
-    Analisa correlações entre as top features
-    """
     if len(features) == 0:
         print("⚠️  Nenhuma feature para análise de correlação")
         return []
@@ -210,11 +188,6 @@ def plot_correlation_analysis(df, features, threshold=0.8):
 
 
 def random_forest_pipeline(X, y, test_size=0.2, random_state=42, n_estimators=100, cv=5):
-    """
-    Executa validação cruzada com StratifiedKFold para classificação binária balanceada.
-    """
-    
-    # ==================== 2. VALIDAÇÃO CRUZADA COM ROC-AUC ROBUSTO ====================
     stratified_cv = StratifiedKFold(n_splits=cv, shuffle=True, random_state=random_state)
     
     # Função personalizada para calcular ROC-AUC de forma segura
@@ -288,7 +261,7 @@ def random_forest_pipeline(X, y, test_size=0.2, random_state=42, n_estimators=10
     else:
         print("roc_auc     : NaN (nenhum fold válido para cálculo)")
     
-    # ==================== 3. TREINAMENTO FINAL ====================
+
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=test_size, random_state=random_state,
         stratify=y, shuffle=True
@@ -319,7 +292,7 @@ def random_forest_pipeline(X, y, test_size=0.2, random_state=42, n_estimators=10
     print(f"F1-Score : {f1:.4f}")
     print(f"ROC-AUC  : {roc_auc:.4f}")
 
-    # ==================== 4. MATRIZ DE CONFUSÃO ====================
+
     cm = confusion_matrix(y_test, y_pred)
     totals = cm.sum(axis=1)[:, np.newaxis]
 
@@ -340,7 +313,7 @@ def random_forest_pipeline(X, y, test_size=0.2, random_state=42, n_estimators=10
             ax1.text(j, i, f"{cm[i, j]}/{totals[i,0]}",
                     ha='center', va='center', color='black', fontsize=12)
 
-    # ==================== 5. CURVA ROC ====================
+
     RocCurveDisplay.from_estimator(rf_model, X_test, y_test, ax=ax2)
     ax2.set_title(f'Curva ROC (AUC = {roc_auc:.4f})')
     ax2.plot([0, 1], [0, 1], 'k--', label='Classificador Aleatório (AUC = 0.5)')
@@ -354,12 +327,6 @@ def random_forest_pipeline(X, y, test_size=0.2, random_state=42, n_estimators=10
 
 
 def logistic_regression_pipeline(X, y, test_size=0.2, random_state=42, cv=5, max_iter=1000):
-    """
-    Executa validação cruzada com StratifiedKFold para Logistic Regression
-    com pré-processamento adequado baseado nas distribuições das features.
-    """
-    
-    # ==================== 1. VERIFICAÇÃO E INFORMAÇÕES ====================
     unique_classes = np.unique(y)
     if len(unique_classes) != 2:
         raise ValueError("❌ Esta função é apenas para classificação binária.")
@@ -369,7 +336,7 @@ def logistic_regression_pipeline(X, y, test_size=0.2, random_state=42, cv=5, max
     print(f"   Classe {unique_classes[0]}: {np.sum(y == unique_classes[0])} amostras")
     print(f"   Classe {unique_classes[1]}: {np.sum(y == unique_classes[1])} amostras")
     
-    # ==================== 2. DEFINIÇÃO DO PRÉ-PROCESSAMENTO ====================
+    
     # Identificar colunas para cada tipo de scaler baseado nas distribuições
     if hasattr(X, 'columns'):
         features_standard = [
@@ -404,11 +371,10 @@ def logistic_regression_pipeline(X, y, test_size=0.2, random_state=42, cv=5, max
             remainder='passthrough'
         )
     else:
-        # Se não for DataFrame, usar StandardScaler em tudo
         print("⚠️  X não é DataFrame, usando StandardScaler em todas as features")
         preprocessor = StandardScaler()
     
-    # ==================== 3. PIPELINE E VALIDAÇÃO CRUZADA ====================
+    
     stratified_cv = StratifiedKFold(n_splits=cv, shuffle=True, random_state=random_state)
     
     # Criar pipeline com pré-processamento e modelo
@@ -417,7 +383,7 @@ def logistic_regression_pipeline(X, y, test_size=0.2, random_state=42, cv=5, max
         ('classifier', LogisticRegression(
             random_state=random_state,
             max_iter=max_iter,
-            class_weight='balanced'  # Importante para lidar com possíveis desbalanceamentos
+            class_weight='balanced'  
         ))
     ])
     
@@ -488,7 +454,7 @@ def logistic_regression_pipeline(X, y, test_size=0.2, random_state=42, cv=5, max
     else:
         print("roc_auc     : NaN (nenhum fold válido para cálculo)")
     
-    # ==================== 4. TREINAMENTO FINAL ====================
+   
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=test_size, random_state=random_state,
         stratify=y, shuffle=True
@@ -524,7 +490,7 @@ def logistic_regression_pipeline(X, y, test_size=0.2, random_state=42, cv=5, max
     print(f"F1-Score : {f1:.4f}")
     print(f"ROC-AUC  : {roc_auc:.4f}")
 
-    # ==================== 5. MATRIZ DE CONFUSÃO ====================
+    
     cm = confusion_matrix(y_test, y_pred)
     totals = cm.sum(axis=1)[:, np.newaxis]
 
@@ -545,7 +511,7 @@ def logistic_regression_pipeline(X, y, test_size=0.2, random_state=42, cv=5, max
             ax1.text(j, i, f"{cm[i, j]}/{totals[i,0]}",
                     ha='center', va='center', color='black', fontsize=12)
 
-    # ==================== 6. CURVA ROC ====================
+    
     RocCurveDisplay.from_estimator(final_pipeline, X_test, y_test, ax=ax2)
     ax2.set_title(f'ROC Curve (AUC = {roc_auc:.4f})')
     ax2.plot([0, 1], [0, 1], 'k--', label='Random Classifier (AUC = 0.5)')
@@ -555,7 +521,7 @@ def logistic_regression_pipeline(X, y, test_size=0.2, random_state=42, cv=5, max
     plt.tight_layout()
     plt.show()
 
-    # ==================== 7. COEFICIENTES DA REGRESSÃO ====================
+    
     if hasattr(X, 'columns'):
         # Extrair os coeficientes do modelo
         classifier = final_pipeline.named_steps['classifier']
@@ -598,16 +564,11 @@ def logistic_regression_pipeline(X, y, test_size=0.2, random_state=42, cv=5, max
 
 
 def svm_pipeline(X, y, test_size=0.2, random_state=42, cv=5, kernel='linear'):
-    """
-    Pipeline corrigido para SVM com CalibratedClassifierCV para evitar NaN no ROC-AUC
-    """
-    
-    # ==================== 1. CONFIGURAÇÃO INICIAL ====================
     unique_classes = np.unique(y)
     print(f"🔍 Classes: {unique_classes}")
     print(f"📊 Distribuição: {np.bincount(y)}")
     
-    # ==================== 2. PRÉ-PROCESSAMENTO ====================
+    
     if hasattr(X, 'columns'):
         preprocessor = ColumnTransformer(
             transformers=[
@@ -618,7 +579,7 @@ def svm_pipeline(X, y, test_size=0.2, random_state=42, cv=5, kernel='linear'):
     else:
         preprocessor = StandardScaler()
     
-    # ==================== 3. MODELO COM CALIBRAÇÃO ====================
+    
     # Usar SVM sem probabilidades e calibrar depois
     base_svm = SVC(
         kernel=kernel, 
@@ -639,7 +600,7 @@ def svm_pipeline(X, y, test_size=0.2, random_state=42, cv=5, kernel='linear'):
         ('classifier', calibrated_svm)
     ])
     
-    # ==================== 4. VALIDAÇÃO CRUZADA ====================
+    
     stratified_cv = StratifiedKFold(n_splits=cv, shuffle=True, random_state=random_state)
     
     # Métricas para validação cruzada
@@ -671,7 +632,7 @@ def svm_pipeline(X, y, test_size=0.2, random_state=42, cv=5, kernel='linear'):
         std_score = np.std(scores)
         print(f"{metric:12}: {mean_score:.4f} ± {std_score:.4f}")
     
-    # ==================== 5. TREINAMENTO FINAL ====================
+    
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=test_size, random_state=random_state,
         stratify=y, shuffle=True
@@ -699,7 +660,7 @@ def svm_pipeline(X, y, test_size=0.2, random_state=42, cv=5, kernel='linear'):
     print(f"F1-Score : {f1:.4f}")
     print(f"ROC-AUC  : {roc_auc:.4f}")
 
-    # ==================== 6. MATRIZ DE CONFUSÃO ====================
+    
     cm = confusion_matrix(y_test, y_pred)
     totals = cm.sum(axis=1)[:, np.newaxis]
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
@@ -720,7 +681,7 @@ def svm_pipeline(X, y, test_size=0.2, random_state=42, cv=5, kernel='linear'):
             ax1.text(j, i, f"{cm[i, j]}/{totals[i,0]}",
                     ha='center', va='center', color='black', fontsize=12)
 
-    # ==================== 7. CURVA ROC ====================
+   
     try:
         RocCurveDisplay.from_estimator(pipeline, X_test, y_test, ax=ax2)
         ax2.set_title(f'ROC Curve (AUC = {roc_auc:.4f})')
